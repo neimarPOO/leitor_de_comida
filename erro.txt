@@ -1,0 +1,7 @@
+(índice):326 Error: SyntaxError: Unexpected token '`', "```json
+{
+"... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at processImage ((índice):322:37)
+processImage	@	(índice):326
+

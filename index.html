@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor de Comida</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-start: #1a1a2e;
+            --background-end: #16213e;
+            --primary-color: #0f3460;
+            --secondary-color: #e94560;
+            --text-color: #dcdcdc;
+            --card-background: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--background-start), var(--background-end));
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-background);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 10px var(--secondary-color);
+        }
+
+        .initial-view, .loading-view, .result-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: var(--secondary-color);
+            color: #fff;
+            box-shadow: 0 0 20px var(--secondary-color);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+        #video {
+            width: 100%;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .loader {
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .result-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            /* Make analysis section span two columns on larger screens */
+            .result-section:first-child {
+                grid-column: span 2;
+            }
+        }
+
+        .result-section {
+            background: var(--card-background);
+            padding: 1.8rem; /* Increased padding */
+            border-radius: 18px; /* Slightly more rounded */
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* Subtle initial shadow */
+            display: flex; /* Use flexbox for content alignment */
+            flex-direction: column;
+        }
+
+        .result-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.3); /* More pronounced hover shadow */
+        }
+
+        .section-title {
+            font-size: 1.6rem; /* Slightly larger title */
+            font-weight: 700; /* Bolder title */
+            color: var(--secondary-color);
+            margin-bottom: 1.2rem; /* More space below title */
+            border-bottom: 2px solid rgba(233, 69, 96, 0.3); /* Subtle underline */
+            padding-bottom: 0.5rem;
+        }
+
+        .section-content {
+            font-size: 1rem; /* Slightly larger content font */
+            line-height: 1.7; /* Improved readability */
+            color: var(--text-color); /* Ensure text color is consistent */
+            flex-grow: 1; /* Allow content to grow and fill space */
+        }
+
+        .error-message {
+            color: var(--secondary-color);
+            text-align: center;
+            font-weight: 500;
+            background: rgba(233, 69, 96, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Leitor de Comida</div>
+        
+        <input type="file" id="image-upload" accept="image/*" class="hidden">
+        <canvas id="canvas" class="hidden"></canvas>
+
+        <div id="initial-view" class="initial-view">
+            <video id="video" class="hidden" autoplay></video>
+            <div class="button-group">
+                <button id="upload-btn" class="btn">Carregar Imagem</button>
+                <button id="camera-btn" class="btn">Usar Câmera</button>
+                <button id="capture-btn" class="btn hidden">Capturar</button>
+            </div>
+        </div>
+
+        <div id="loading-view" class="loading-view hidden">
+            <img id="thumbnail-loading" class="thumbnail hidden" alt="Imagem para análise">
+            <div class="loader"></div>
+            <span>Analisando sua refeição...</span>
+        </div>
+
+        <div id="result-view" class="result-view hidden">
+            <img id="thumbnail-result" class="thumbnail hidden" alt="Imagem analisada">
+            <div class="result-grid">
+                <div class="result-section">
+                    <div class="section-title">Análise do Alimento</div>
+                    <div id="analysis-content" class="section-content"></div>
+                </div>
+                <div class="result-section">
+                    <div class="section-title">Ingredientes</div>
+                    <div id="ingredients-content" class="section-content"></div>
+                </div>
+                <div class="result-section">
+                    <div class="section-title">Modo de Preparo</div>
+                    <div id="preparation-content" class="section-content"></div>
+                </div>
+                <div class="result-section">
+                    <div class="section-title">Tabela Nutricional</div>
+                    <div id="nutrition-content" class="section-content"></div>
+                </div>
+                <div class="result-section" style="grid-column: 1 / -1;">
+                    <div class="section-title">História e Origem</div>
+                    <div id="history-content" class="section-content"></div>
+                </div>
+            </div>
+             <button id="reset-btn" class="btn">Analisar Outro</button>
+        </div>
+
+        <div id="error-message" class="error-message hidden"></div>
+    </div>
+
+    <style>
+        .thumbnail {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            object-fit: cover;
+        }
+    </style>
+
+    <script>
+        const API_URL = '/analyze'; // Agora a URL aponta para o seu servidor local
+
+        // Views
+        const initialView = document.getElementById('initial-view');
+        const loadingView = document.getElementById('loading-view');
+        const resultView = document.getElementById('result-view');
+
+        // Buttons
+        const uploadBtn = document.getElementById('upload-btn');
+        const cameraBtn = document.getElementById('camera-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Elements
+        const imageUpload = document.getElementById('image-upload');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const errorMessage = document.getElementById('error-message');
+        const thumbnailLoading = document.getElementById('thumbnail-loading');
+        const thumbnailResult = document.getElementById('thumbnail-result');
+        
+        // Result Content
+        const analysisContent = document.getElementById('analysis-content');
+        const ingredientsContent = document.getElementById('ingredients-content');
+        const preparationContent = document.getElementById('preparation-content');
+        const nutritionContent = document.getElementById('nutrition-content');
+        const historyContent = document.getElementById('history-content');
+
+        let currentStream;
+
+        // Event Listeners
+        uploadBtn.addEventListener('click', () => imageUpload.click());
+        cameraBtn.addEventListener('click', startCamera);
+        captureBtn.addEventListener('click', captureImage);
+        resetBtn.addEventListener('click', resetUI);
+        imageUpload.addEventListener('change', handleImageUpload);
+
+        function switchView(view) {
+            initialView.classList.add('hidden');
+            loadingView.classList.add('hidden');
+            resultView.classList.add('hidden');
+            document.getElementById(view).classList.remove('hidden');
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64Image = event.target.result;
+                    displayThumbnail(base64Image); // Display thumbnail
+                    processImage(base64Image);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function startCamera() {
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = currentStream;
+                video.classList.remove('hidden');
+                cameraBtn.classList.add('hidden');
+                uploadBtn.classList.add('hidden');
+                captureBtn.classList.remove('hidden');
+            } catch (err) {
+                showError('Não foi possível acessar a câmera. Verifique as permissões.');
+            }
+        }
+
+        function captureImage() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const base64Image = canvas.toDataURL('image/jpeg');
+            stopCamera();
+            displayThumbnail(base64Image); // Display thumbnail
+            processImage(base64Image);
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            video.classList.add('hidden');
+            captureBtn.classList.add('hidden');
+            cameraBtn.classList.remove('hidden');
+            uploadBtn.classList.remove('hidden');
+        }
+
+        function displayThumbnail(base64Image) {
+            thumbnailLoading.src = base64Image;
+            thumbnailResult.src = base64Image;
+            thumbnailLoading.classList.remove('hidden');
+            thumbnailResult.classList.remove('hidden');
+        }
+
+        async function processImage(base64Image) {
+            switchView('loading-view');
+            errorMessage.classList.add('hidden');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ image: base64Image }) // Envia a imagem para o seu servidor
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Erro do servidor: ${response.status} ${response.statusText} - ${errorData.error || 'Erro desconhecido'}`);
+                }
+
+                const data = await response.json();
+                // A resposta do OpenRouter é diferente da do Gemini
+                const content = data.choices[0].message.content;
+                // Remove markdown code block delimiters if present
+                const cleanedContent = content.replace(/^```json\s*|\s*```$/g, '');
+                displayResults(JSON.parse(cleanedContent)); // O conteúdo ainda é um JSON string
+                switchView('result-view');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showError(`Falha ao analisar a imagem: ${err.message}. Verifique se o servidor Python está rodando.`);
+                switchView('initial-view');
+            }
+        }
+
+        function displayResults(data) {
+            analysisContent.innerHTML = data.descricao || 'Não disponível.';
+            ingredientsContent.innerHTML = data.ingredientes || 'Não disponível.';
+            preparationContent.innerHTML = data.modoDePreparo || 'Não disponível.';
+            nutritionContent.innerHTML = data.tabelaNutricional || 'Não disponível.';
+            historyContent.innerHTML = data.historia || 'Não disponível.';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+        
+        function resetUI() {
+            stopCamera();
+            switchView('initial-view');
+            errorMessage.classList.add('hidden');
+            imageUpload.value = ''; // Reset file input
+            thumbnailLoading.classList.add('hidden'); // Hide thumbnail
+            thumbnailResult.classList.add('hidden'); // Hide thumbnail
+        }
+
+    </script>
+</body>
+</html>
