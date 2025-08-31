@@ -79,5 +79,5 @@ def analyze():
             return jsonify({"error": f"Erro ao se comunicar com a API do OpenRouter: {e}. Status: {response.status_code}. Resposta: {response.text}"}), 500
         return jsonify({"error": f"Erro ao se comunicar com a API do OpenRouter: {e}"}), 500
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# No need for app.run() when deploying to Vercel, as Vercel handles the server execution.
+# The 'app' instance is automatically picked up by Vercel's Python runtime.

@@ -1,7 +1,2 @@
-(índice):326 Error: SyntaxError: Unexpected token '`', "```json
-{
-"... is not valid JSON
-    at JSON.parse (<anonymous>)
-    at processImage ((índice):322:37)
-processImage	@	(índice):326
-
+/analyze:1  Failed to load resource: the server responded with a status of 404 ()Entenda o erro
+(índice):365 Error: SyntaxError: Unexpected token 'T', "The page c"... is not valid JSON
